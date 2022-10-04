@@ -30,6 +30,8 @@ import matplotlib.pyplot as plt
 import multiprocessing
 import pathlib
 from scipy import stats
+from pathlib import Path
+
 
 
 nltk.download('stopwords')
@@ -39,17 +41,24 @@ nltk.download('punkt')
 
 def gen_sentence(row):
     path = os.path.join("../../data/earning_calls_data/",row.text_file_name)
-    with open(path) as pearl:
-        text = pearl.read()
+
+
+    if Path(path).is_dir():
+        with open(path) as pearl:
+            text = pearl.read()
 
     sentences = text.splitlines()
     return sentences
 
 
 
-data_train = pd.read_csv("../../data/train_data.csv") 
-data_test = pd.read_csv("../../data/test_data.csv") 
-data_val = pd.read_csv("../../data/val_data.csv") 
+# data_train = pd.read_csv("../../data/train_data.csv")
+# data_test = pd.read_csv("../../data/test_data.csv")
+# data_val = pd.read_csv("../../data/val_data.csv")
+
+data_train = pd.read_csv("train_data.csv")
+data_test = pd.read_csv("test_data.csv")
+data_val = pd.read_csv("val_data.csv")
 
 data_train["text"] = data_train.apply(lambda row : gen_sentence(row) ,axis =1)
 data_test["text"] = data_test.apply(lambda row : gen_sentence(row) ,axis =1)
@@ -57,15 +66,23 @@ data_val["text"] = data_val.apply(lambda row : gen_sentence(row) ,axis =1)
 
 
 
-data_train.to_json('../../data/train_pk.json',orient='index')
-data_test.to_json('../../data/test_pk.json',orient='index')
-data_val.to_json('../../data/val_pk.json',orient='index')
+# data_train.to_json('../../data/train_pk.json',orient='index')
+# data_test.to_json('../../data/test_pk.json',orient='index')
+# data_val.to_json('../../data/val_pk.json',orient='index')
+
+data_train.to_json('train_pk.json',orient='index')
+data_test.to_json('test_pk.json',orient='index')
+data_val.to_json('val_pk.json',orient='index')
 
 
 
-data_train_clf = pd.read_csv("../../data/train_data.csv") 
-data_test_clf = pd.read_csv("../../data/test_data.csv") 
-data_val_clf = pd.read_csv("../../data/val_data.csv") 
+# data_train_clf = pd.read_csv("../../data/train_data.csv")
+# data_test_clf = pd.read_csv("../../data/test_data.csv")
+# data_val_clf = pd.read_csv("../../data/val_data.csv")
+
+data_train_clf = pd.read_csv("train_data.csv")
+data_test_clf = pd.read_csv("test_data.csv")
+data_val_clf = pd.read_csv("val_data.csv")
 
 data_train_clf["text"] = data_train_clf.apply(lambda row : gen_sentence(row) ,axis =1)
 data_test_clf["text"] = data_test_clf.apply(lambda row : gen_sentence(row) ,axis =1)
@@ -73,10 +90,13 @@ data_val_clf["text"] = data_val_clf.apply(lambda row : gen_sentence(row) ,axis =
 
 
 
-data_train_clf.to_json('../../data/train_pk_clf.json',orient='index')
-data_test_clf.to_json('../../data/test_pk_clf.json',orient='index')
-data_val_clf.to_json('../../data/val_pk_clf.json',orient='index')
+# data_train_clf.to_json('../../data/train_pk_clf.json',orient='index')
+# data_test_clf.to_json('../../data/test_pk_clf.json',orient='index')
+# data_val_clf.to_json('../../data/val_pk_clf.json',orient='index')
 
+data_train_clf.to_json('train_pk_clf.json',orient='index')
+data_test_clf.to_json('test_pk_clf.json',orient='index')
+data_val_clf.to_json('val_pk_clf.json',orient='index')
 
 
 def expand_contractions(text, contraction_mapping=CONTRACTION_MAP):
@@ -198,25 +218,25 @@ def glove2dict(glove_filename ):
 
 def load_data(filename):
 
-	data={}
-	with open(filename) as f:
-	  data = json.load(f)
+    data={}
+    with open(filename) as f:
+	    data = json.load(f)
 
-	return data
+    return data
 
 
 def preprocess_text(text):
-        processed_text=[]
+    processed_text=[]
    
-        for line in text:
-            text = expand_contractions(line)
-            tokens = word_tokenize(text)
-            tokens = [w.lower() for w in tokens]
-            words = [w for w in tokens if not w in string.punctuation]
+    for line in text:
+        text = expand_contractions(line)
+        tokens = word_tokenize(text)
+        tokens = [w.lower() for w in tokens]
+        words = [w for w in tokens if not w in string.punctuation]
 
-            words = [word for word in words if word not in stop_words and len(word)>2]
-            processed_text.append(words)  
-        return processed_text
+        words = [word for word in words if word not in stop_words and len(word)>2]
+        processed_text.append(words)
+    return processed_text
 
 def get_mittens(words):
     index = [vocabulary[word] for word in words]
