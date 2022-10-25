@@ -21,15 +21,25 @@ train_df = pd.read_csv("../data/train_data.csv")
 test_df = pd.read_csv("../data/test_data.csv")
 val_df = pd.read_csv("../data/val_data.csv")
 
+
     
 with open('../data/mittens_train.pkl', 'rb') as f:
     text_train=pickle.load(f)
-    
+
 with open('../data/mittens_test.pkl', 'rb') as f:
     text_test=pickle.load(f)
-    
+
 with open('../data/mittens_val.pkl', 'rb') as f:
     text_val=pickle.load(f)
+
+# with open('../feature_extraction/Text/train_union_mitten.pkl', 'rb') as f:
+#     text_train = pickle.load(f)
+#
+# with open('../feature_extraction/Text/test_union_mitten.pkl', 'rb') as f:
+#     text_test = pickle.load(f)
+#
+# with open('../feature_extraction/Text/val_union_mitten.pkl', 'rb') as f:
+#     text_val = pickle.load(f)
 
 def ModifyData_clf(df,text_dict):
     error=[]
@@ -42,23 +52,30 @@ def ModifyData_clf(df,text_dict):
     y_30days=[]
 
     for index,row in df.iterrows():
+
         
         try:
             
-            X_text.append(text_dict[row['text_file_name'][:-9]])
+            #X_text.append(text_dict[row['text_file_name'][:-9]])
+            X_text.append(text_dict[row['text_file_name'][:-17]][0,:,:])
          
         except:
        
-            error_text.append(row['text_file_name'][:-9])
+            #error_text.append(row['text_file_name'][:-9])
+            error_text.append(row['text_file_name'][:-17])
+            continue #aggiunta
 
         lstm_matrix_temp = np.zeros((520, 26), dtype=np.float64)
         i=0
         
         try:
-            speaker_list=list(audio_featDict[row['text_file_name'][:-9]])
+            #speaker_list=list(audio_featDict[row['text_file_name'][:-9]])
+            speaker_list = list(audio_featDict[row['text_file_name'][:-17]])
             speaker_list=sorted(speaker_list, key=lambda x: (int(x.split('_')[1]), int(x.split('_')[2])))
             for sent in speaker_list:
-                lstm_matrix_temp[i, :]=audio_featDict[row['text_file_name'][:-9]][sent]+audio_featDictMark2[row['text_file_name'][:-9]][sent]
+                #lstm_matrix_temp[i, :]=audio_featDict[row['text_file_name'][:-9]][sent]+audio_featDictMark2[row['text_file_name'][:-9]][sent]
+                lstm_matrix_temp[i, :] = audio_featDict[row['text_file_name'][:-17]][sent] + \
+                                         audio_featDictMark2[row['text_file_name'][:-17]][sent]
                 i+=1
             X.append(lstm_matrix_temp)
 
@@ -66,7 +83,8 @@ def ModifyData_clf(df,text_dict):
 
             Padded=np.zeros((520, 26), dtype=np.float64)
             X.append(Padded)
-            error.append(row['text_file_name'][:-9])
+            #error.append(row['text_file_name'][:-9])
+            error.append(row['text_file_name'][:-17])
             
 
         y_3days.append(float(row['lab_3']))
@@ -99,23 +117,34 @@ def ModifyData_reg(df,text_dict):
     y_30days=[]
 
     for index,row in df.iterrows():
+
         
         try:
             
-            X_text.append(text_dict[row['text_file_name'][:-9]])
+            #X_text.append(text_dict[row['text_file_name'][:-9]]) #-9 se il nome del file fosse solo /Text.txt
+            X_text.append(text_dict[row['text_file_name'][:-17]][0,:,:]) #noi abbiamo /TextSequence.txt
          
         except:
        
-            error_text.append(row['text_file_name'][:-9])
+            #error_text.append(row['text_file_name'][:-9])
+            error_text.append(row['text_file_name'][:-17])
+            continue #aggiunta
+
+        #if row['text_file_name'][:-17] == "3M Company_20170425":
+            #print("ci siamo")
 
         lstm_matrix_temp = np.zeros((520, 26), dtype=np.float64)
         i=0
         
         try:
-            speaker_list=list(audio_featDict[row['text_file_name'][:-9]])
+            #speaker_list=list(audio_featDict[row['text_file_name'][:-9]])
+            speaker_list = list(audio_featDict[row['text_file_name'][:-17]])
             speaker_list=sorted(speaker_list, key=lambda x: (int(x.split('_')[1]), int(x.split('_')[2])))
             for sent in speaker_list:
-                lstm_matrix_temp[i, :]=audio_featDict[row['text_file_name'][:-9]][sent]+audio_featDictMark2[row['text_file_name'][:-9]][sent]
+                #lstm_matrix_temp[i, :]=audio_featDict[row['text_file_name'][:-9]][sent]+audio_featDictMark2[row['text_file_name'][:-9]][sent]
+                lstm_matrix_temp[i, :] = audio_featDict[row['text_file_name'][:-17]][sent] + \
+                                         audio_featDictMark2[row['text_file_name'][:-17]][sent]
+
                 i+=1
             X.append(lstm_matrix_temp)
 
@@ -123,7 +152,8 @@ def ModifyData_reg(df,text_dict):
 
             Padded=np.zeros((520, 26), dtype=np.float64)
             X.append(Padded)
-            error.append(row['text_file_name'][:-9])
+            #error.append(row['text_file_name'][:-9])
+            error.append(row['text_file_name'][:-17])
             
 
         y_3days.append(float(row['future_3']))
