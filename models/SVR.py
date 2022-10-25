@@ -22,83 +22,97 @@ from sklearn.model_selection import StratifiedKFold
 from sklearn.feature_selection import RFE
 from sklearn.preprocessing import StandardScaler
 import math
+from numpy import inf
 
-
+if __name__ == '__main__':
     
-testdf=pd.read_csv("../data/test_data.csv")
-traindf= pd.read_csv("../data/train_data.csv")
+    testdf=pd.read_csv("../data/test_data.csv")
+    traindf= pd.read_csv("../data/train_data.csv")
 
 
-X_train=[]
-y_train3days=[]
-y_train7days=[]
-y_train15days=[]
-y_train30days=[]
+    X_train=[]
+    y_train3days=[]
+    y_train7days=[]
+    y_train15days=[]
+    y_train30days=[]
 
 
-for index,row in traindf.iterrows():
-    y_train3days.append(float(row['future_3']))
-    y_train7days.append(float(row['future_7']))
-    y_train15days.append(float(row['future_15']))
-    y_train30days.append(float(row['future_30']))
-    
-
-#Test data set-up
-X_test=[]
-y_test3days=[]
-y_test7days=[]
-y_test15days=[]
-y_test30days=[]
-
-for index,row in testdf.iterrows():
-    y_test3days.append(float(row['future_3']))
-    y_test7days.append(float(row['future_7']))
-    y_test15days.append(float(row['future_15']))
-    y_test30days.append(float(row['future_30']))
-    
-save_dir = os.path.join("model_predictions/","SVR/")
-pathlib.Path(save_dir).mkdir(parents=True, exist_ok=True) 
-
-def SVR_regressor(duration,X_train, y_train, X_test, y_test):
-    Cs = [0.001, 0.01, 0.1, 1, 10]
-    gammas = [0.001, 0.01, 0.1, 1]
-    param_grid = {'C': Cs, 'gamma' : gammas}
-    grid_search = GridSearchCV(SVR(kernel='rbf'), param_grid)
-    grid_search.fit(X_train, y_train)
-    pred=grid_search.predict(X_test)
-    
-    save_path=os.path.join(save_dir,"pred_{}.csv".format(duration))
-    df = pd.DataFrame(pred)
-    df.to_csv(save_path)
-    # print("MSE:"+str(mean_squared_error(pred,y_test)))
-    
-    return
-
-with open('../data/financial_features/X_train3days.pkl', 'rb') as f:
-    X_train3days=pickle.load(f)
-with open('../data/financial_features/X_train7days.pkl', 'rb') as f:
-    X_train7days=pickle.load(f)
-with open('../data/financial_features/X_train15days.pkl', 'rb') as f:
-    X_train15days=pickle.load(f)
-with open('../data/financial_features/X_train30days.pkl', 'rb') as f:
-    X_train30days=pickle.load(f)
-with open('../data/financial_features/X_test3days.pkl', 'rb') as f:
-    X_test3days=pickle.load(f)
-with open('../data/financial_features/X_test7days.pkl', 'rb') as f:
-    X_test7days=pickle.load(f)
-with open('../data/financial_features/X_test15days.pkl', 'rb') as f:
-    X_test15days=pickle.load(f)
-with open('../data/financial_features/X_test30days.pkl', 'rb') as f:
-    X_test30days=pickle.load(f)
+    for index,row in traindf.iterrows():
+        y_train3days.append(float(row['future_3']))
+        y_train7days.append(float(row['future_7']))
+        y_train15days.append(float(row['future_15']))
+        y_train30days.append(float(row['future_30']))
 
 
-# print("3 Days MSE:")
-SVR_regressor(duration=3,X_train=X_train3days, y_train=y_train3days, X_test=X_test3days, y_test=y_test3days)
-# print("7 Days MSE:")
-SVR_regressor(duration=7,X_train=X_train7days, y_train=y_train7days, X_test=X_test7days, y_test=y_test7days)
-# print("15 Days MSE:")
-SVR_regressor(duration=15,X_train=X_train15days, y_train=y_train15days, X_test=X_test15days, y_test=y_test15days)
-# print("30 Days MSE:")
-SVR_regressor(duration=30,X_train=X_train30days, y_train=y_train30days, X_test=X_test30days, y_test=y_test30days)
+    #Test data set-up
+    X_test=[]
+    y_test3days=[]
+    y_test7days=[]
+    y_test15days=[]
+    y_test30days=[]
+
+    for index,row in testdf.iterrows():
+        y_test3days.append(float(row['future_3']))
+        y_test7days.append(float(row['future_7']))
+        y_test15days.append(float(row['future_15']))
+        y_test30days.append(float(row['future_30']))
+
+    save_dir = os.path.join("model_predictions/","SVR/")
+    pathlib.Path(save_dir).mkdir(parents=True, exist_ok=True)
+
+    def replace_inf(X_train, y_train, X_test, y_test):
+        X_train[X_train == -inf] = 0
+        y_train[y_train == -inf] = 0
+        X_test[X_test == -inf] = 0
+        y_test[y_test == -inf] = 0
+
+        return X_train, y_train, X_test, y_test
 
 
+    def SVR_regressor(duration,X_train, y_train, X_test, y_test):
+        #df_check = pd.DataFrame(X_train)
+        #nan_values = df_check[df_check.isinf().any(axis=1)]
+        #r = df_check.index[np.isinf(df_check).any(1)]
+        #print(df_check.iloc[r])
+        X_train, y_train, X_test, y_test = replace_inf(X_train, y_train, X_test, y_test)
+        #print(nan_values)
+        Cs = [0.001, 0.01, 0.1, 1, 10]
+        gammas = [0.001, 0.01, 0.1, 1]
+        param_grid = {'C': Cs, 'gamma' : gammas}
+        grid_search = GridSearchCV(SVR(kernel='rbf'), param_grid)
+        grid_search.fit(X_train, y_train)
+        pred=grid_search.predict(X_test)
+
+        save_path=os.path.join(save_dir,"pred_{}.csv".format(duration))
+        df = pd.DataFrame(pred)
+        df.to_csv(save_path)
+        print("MSE:"+str(mean_squared_error(pred,y_test)))
+
+        return
+
+    with open('../data/financial_features/X_train3days.pkl', 'rb') as f:
+        X_train3days=pickle.load(f)
+    with open('../data/financial_features/X_train7days.pkl', 'rb') as f:
+        X_train7days=pickle.load(f)
+    with open('../data/financial_features/X_train15days.pkl', 'rb') as f:
+        X_train15days=pickle.load(f)
+    with open('../data/financial_features/X_train30days.pkl', 'rb') as f:
+        X_train30days=pickle.load(f)
+    with open('../data/financial_features/X_test3days.pkl', 'rb') as f:
+        X_test3days=pickle.load(f)
+    with open('../data/financial_features/X_test7days.pkl', 'rb') as f:
+        X_test7days=pickle.load(f)
+    with open('../data/financial_features/X_test15days.pkl', 'rb') as f:
+        X_test15days=pickle.load(f)
+    with open('../data/financial_features/X_test30days.pkl', 'rb') as f:
+        X_test30days=pickle.load(f)
+
+
+    # print("3 Days MSE:")
+    SVR_regressor(duration=3,X_train=X_train3days, y_train=y_train3days, X_test=X_test3days, y_test=y_test3days)
+    # print("7 Days MSE:")
+    SVR_regressor(duration=7,X_train=X_train7days, y_train=y_train7days, X_test=X_test7days, y_test=y_test7days)
+    # print("15 Days MSE:")
+    SVR_regressor(duration=15,X_train=X_train15days, y_train=y_train15days, X_test=X_test15days, y_test=y_test15days)
+    # print("30 Days MSE:")
+    SVR_regressor(duration=30,X_train=X_train30days, y_train=y_train30days, X_test=X_test30days, y_test=y_test30days)
